@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nayma-booking-api-config
+  namespace: nayma-sre
+data:
+  PORT: "8080"
+  DATABASE_PATH: "/tmp/nayma_appointments.db"
