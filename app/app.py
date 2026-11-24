@@ -1,20 +1,28 @@
 import os
 import re
 import sqlite3
+import tempfile
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import Flask, jsonify, request
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram
-from prometheus_client import generate_latest
-
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 
 APP_VERSION = "1.0.0"
 
 DB_PATH = os.getenv(
     "DATABASE_PATH",
-    "/tmp/nayma_appointments.db",
+    os.path.join(
+        tempfile.gettempdir(),
+        "nayma_appointments.db",
+    ),
 )
 
 ALLOWED_SERVICES = {
@@ -22,6 +30,7 @@ ALLOWED_SERVICES = {
     "technical-support",
     "account-review",
 }
+
 
 REQUEST_COUNT = Counter(
     "http_requests_total",
@@ -225,22 +234,17 @@ def create_app():
 
         try:
             appointment_date = datetime.fromisoformat(
-                data["appointment_date"].replace(
-                    "Z",
-                    "+00:00",
-                )
+                data["appointment_date"]
             )
 
             if appointment_date.tzinfo is None:
                 appointment_date = appointment_date.replace(
-                    tzinfo=timezone.utc
+                    tzinfo=UTC
                 )
 
-            appointment_date = appointment_date.astimezone(
-                timezone.utc
-            )
+            appointment_date = appointment_date.astimezone(UTC)
 
-            if appointment_date <= datetime.now(timezone.utc):
+            if appointment_date <= datetime.now(UTC):
                 return error_response(
                     "VALIDATION_ERROR",
                     "Appointment date must be in the future.",
@@ -261,7 +265,7 @@ def create_app():
             "appointment_date": appointment_date.isoformat(),
             "service_type": data["service_type"],
             "status": "confirmed",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
 
         try:
@@ -379,6 +383,6 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(
-        host="0.0.0.0",
+        host=os.getenv("HOST", "127.0.0.1"),
         port=int(os.getenv("PORT", "8080")),
     )

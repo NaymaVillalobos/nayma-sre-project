@@ -6,14 +6,12 @@ import pytest
 
 @pytest.fixture
 def client():
-    database = tempfile.NamedTemporaryFile(
+    file_descriptor, database_path = tempfile.mkstemp(
         suffix=".db",
-        delete=False,
     )
+    os.close(file_descriptor)
 
-    database.close()
-
-    os.environ["DATABASE_PATH"] = database.name
+    os.environ["DATABASE_PATH"] = database_path
 
     from app.app import create_app
 
@@ -23,4 +21,4 @@ def client():
     with application.test_client() as test_client:
         yield test_client
 
-    os.unlink(database.name)
+    os.unlink(database_path)

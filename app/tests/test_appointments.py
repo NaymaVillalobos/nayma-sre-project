@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 
 def valid_appointment():
-    future = datetime.now(timezone.utc) + timedelta(days=10)
+    future = datetime.now(UTC) + timedelta(days=10)
 
     return {
         "customer_name": "SRE Test User",
@@ -44,7 +44,7 @@ def test_past_date(client):
     data = valid_appointment()
 
     data["appointment_date"] = (
-        datetime.now(timezone.utc) - timedelta(days=1)
+        datetime.now(UTC) - timedelta(days=1)
     ).isoformat()
 
     response = client.post("/appointments", json=data)
