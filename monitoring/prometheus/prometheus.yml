@@ -15,4 +15,4 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          - "host.docker.internal:8080"
+          - "nayma-booking-api:8080"
