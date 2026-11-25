@@ -1,0 +1,43 @@
+groups:
+  - name: nayma-sre-alerts
+    rules:
+      - alert: ApplicationDown
+        expr: up{job="nayma-booking-api"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          service: nayma-booking-api
+        annotations:
+          summary: "Nayma Booking API is unavailable"
+          description: "The application has been unreachable for 3 minutes."
+
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="nayma-booking-api",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="nayma-booking-api"}[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: nayma-booking-api
+        annotations:
+          summary: "High HTTP error rate"
+          description: "HTTP 5xx responses exceed 5%."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(http_request_duration_seconds_bucket{job="nayma-booking-api"}[5m])
+            )
+          ) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: nayma-booking-api
+        annotations:
+          summary: "High API latency"
+          description: "API p95 latency exceeds 800 milliseconds."
